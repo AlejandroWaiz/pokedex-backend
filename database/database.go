@@ -16,6 +16,7 @@ type Database struct {
 }
 
 type DatabaseImplementation interface {
+	CreateDatabase() []error
 }
 
 func New() (DatabaseImplementation, error) {

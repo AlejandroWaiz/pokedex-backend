@@ -10,7 +10,7 @@ import (
 	"github.com/mtslzr/pokeapi-go/structs"
 )
 
-func (d *Database) createDatabase() []error {
+func (d *Database) CreateDatabase() []error {
 
 	var errors []error
 
