@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -22,7 +21,7 @@ func (db *Database) GetAllPokemons() ([]model.FrontendPokedexPokemon, error) {
 	iter := collection.Documents(ctx)
 
 	//var pokemons []model.PokeapiPokemon
-	var results []model.FrontendPokedexPokemon
+	var pokemons []model.FrontendPokedexPokemon
 	var pokemon model.FrontendPokedexPokemon
 	var errors []error
 
@@ -55,18 +54,8 @@ func (db *Database) GetAllPokemons() ([]model.FrontendPokedexPokemon, error) {
 
 		}
 
-		// var pokemon model.PokeapiPokemon
-		// if err := doc.DataTo(&pokemon); err != nil {
-
-		// 	if len(errors) > 20 {
-		// 		log.Println(err)
-		// 		errors = append(errors, fmt.Errorf("[Database] Err maping doc data: %v", err))
-		// 		continue
-		// 	} else {
-		// 		break
-		// 	}
-
-		// }
+		//TODO: decidido cambiar todo el funcionamiento a la funcion "DataAt" para buscar solo la informacion requerida
+		//Y no toda por cada documento, asique habrá que agregar individualmente los campos y manejar sus errores
 
 		pokemonData := doc.Data()
 
@@ -77,43 +66,21 @@ func (db *Database) GetAllPokemons() ([]model.FrontendPokedexPokemon, error) {
 
 		pokemon.Name = pokemonData["Name"].(string)
 		pokemon.ID = pokemonData["ID"].(int64)
-		//Stats := pokemonData["Stats"].([]model.PokeapiStat)
 
-		StatsData, err := doc.DataAt("Abilities")
+		StatsData, err := doc.DataAt("Stats")
+		pokemon.Stats = StatsData
 
-		if err != nil {
-			errors = append(errors, err)
-		}
+		typesData, err := doc.DataAt("Types")
+		pokemon.ElementalTypes = typesData
 
-		var Stats []model.PokeapiStat
-
-		err = json.Unmarshal([]byte(fmt.Sprintf("%v", StatsData)), &Stats)
-
-		if err != nil {
-			errors = append(errors, err)
-		}
-
-		if len(Stats) == 0 {
-			errors = append(errors, fmt.Errorf("Null info from firestore"))
-		}
-
-		for _, s := range Stats {
-			var stat model.PokemonStat
-			stat.Name = s.Stat.Name
-			stat.BaseStat = s.BaseStat
-			pokemon.Stats = append(pokemon.Stats, stat)
-		}
-
-		results = append(results, pokemon)
-
-		//pokemons = append(pokemons, pokemon)
+		pokemons = append(pokemons, pokemon)
 
 	}
 
 	if len(errors) > 0 {
-		return results, fmt.Errorf("Err getting all pokemons")
+		return pokemons, fmt.Errorf("Err getting all pokemons")
 	} else {
-		return results, nil
+		return pokemons, nil
 	}
 
 }
